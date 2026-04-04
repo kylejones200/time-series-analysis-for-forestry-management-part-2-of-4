@@ -1,3 +1,7 @@
+# Generated data and figures (run scripts locally to reproduce)
+coast_range_dfir_panel.parquet
+figures/
+
 # Python
 __pycache__/
 *.pyc
