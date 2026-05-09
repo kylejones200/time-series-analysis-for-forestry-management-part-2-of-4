@@ -30,6 +30,23 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+import logging
+import yaml
+
+def load_config(config_path=None):
+    """Load configuration from YAML file."""
+    if config_path is None:
+        config_path = Path(__file__).parent / 'config.yaml'
+    if not config_path.exists():
+        return {}
+    with open(config_path) as _f:
+        return _yaml.safe_load(_f) or {}
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore")
 
 # ---------------------------------------------------------------------------
@@ -66,7 +83,7 @@ def fetch_fia_trees(state: str, county_codes: set[int]) -> pd.DataFrame:
             "First run downloads Oregon FIA data (~400 MB)."
         )
 
-    print(f"Loading FIA data for {state} (first run downloads from DataMart)...")
+    logger.info(f"Loading FIA data for {state} (first run downloads from DataMart)...")
     fia = pyfia.FIA(state)
 
     # tree-level panel: one row per live tree per inventory cycle
@@ -84,7 +101,7 @@ def fetch_fia_trees(state: str, county_codes: set[int]) -> pd.DataFrame:
             "Check county codes or expand the filter."
         )
 
-    print(f"  FIA rows after filter: {len(trees):,}")
+    logger.info(f"  FIA rows after filter: {len(trees):,}")
     return trees
 
 
@@ -129,7 +146,7 @@ def trees_to_panel(trees: pd.DataFrame) -> pd.DataFrame:
     panel = t[cols].dropna(subset=["year", "net_growth_m3"])
     panel = panel[panel["year"].between(YEAR_MIN, YEAR_MAX)]
     panel = panel.reset_index(drop=True)
-    print(f"  Panel rows after aggregation: {len(panel):,}  "
+    logger.info(f"  Panel rows after aggregation: {len(panel):,}  "
           f"years {panel['year'].min():.0f}–{panel['year'].max():.0f}")
     return panel
 
@@ -162,7 +179,7 @@ def fetch_prism_county(county_fips_list: list[int],
                              "precip_mm": ppt, "gdd": gdd})
 
     df = pd.DataFrame(records)
-    print(f"  PRISM records: {len(df)}")
+    logger.info(f"  PRISM records: {len(df)}")
     return df
 
 
@@ -286,8 +303,8 @@ def build_panel() -> pd.DataFrame:
 
     panel = panel.sort_values(["district", "stand_id", "year"]).reset_index(drop=True)
     panel.to_parquet(OUTPUT, index=False)
-    print(f"\nSaved {len(panel):,} rows → {OUTPUT}")
-    print(panel.dtypes.to_string())
+    logger.info(f"\nSaved {len(panel):,} rows → {OUTPUT}")
+    logger.info(panel.dtypes.to_string())
     return panel
 
 

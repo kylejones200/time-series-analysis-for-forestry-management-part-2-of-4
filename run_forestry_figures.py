@@ -28,6 +28,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import logging
+import yaml
+
+def load_config(config_path=None):
+    """Load configuration from YAML file."""
+    if config_path is None:
+        config_path = Path(__file__).parent / 'config.yaml'
+    if not config_path.exists():
+        return {}
+    with open(config_path) as _f:
+        return _yaml.safe_load(_f) or {}
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 PARQUET = Path("coast_range_dfir_panel.parquet")
 FIGURES = Path("figures")
 VAL_FROM = 2019
@@ -103,8 +120,8 @@ def run_model(df: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
         valid_parts.append(valid_y)
 
     valid = pd.concat(valid_parts, ignore_index=True)
-    print(f"Mode: {'cross-section' if cross_section else 'time-series'}")
-    print(f"Validation rows: {len(valid):,}")
+    logger.info(f"Mode: {'cross-section' if cross_section else 'time-series'}")
+    logger.info(f"Validation rows: {len(valid):,}")
     return valid, cross_section
 
 
@@ -164,7 +181,7 @@ def fig1_district_actual_vs_predicted(district_fc: pd.DataFrame, out: Path) -> N
         .sum()
         .reset_index()
     )
-    fig, ax = plt.subplots(figsize=(8, 4))
+    fig, ax = plt.subplots(figsize=tuple(config.get('output', {}).get('figsize', [8, 4])))
     ax.plot(agg["year"], agg["net_growth_m3"], marker="o", label="Actual")
     ax.plot(agg["year"], agg["pred_growth_m3"], marker="s", linestyle="--", label="Predicted")
     ax.set_title("District-level Actual vs Predicted Net Growth (state total)")
@@ -175,7 +192,7 @@ def fig1_district_actual_vs_predicted(district_fc: pd.DataFrame, out: Path) -> N
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
-    print(f"  Saved {out}")
+    logger.info(f"  Saved {out}")
 
 
 def fig2_sustainable_harvest(district_fc: pd.DataFrame, out: Path, top_n: int = 10) -> None:
@@ -199,7 +216,7 @@ def fig2_sustainable_harvest(district_fc: pd.DataFrame, out: Path, top_n: int = 
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
-    print(f"  Saved {out}")
+    logger.info(f"  Saved {out}")
 
 
 def fig3_stand_scatter(valid: pd.DataFrame, out: Path) -> None:
@@ -221,7 +238,7 @@ def fig3_stand_scatter(valid: pd.DataFrame, out: Path) -> None:
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
-    print(f"  Saved {out}")
+    logger.info(f"  Saved {out}")
 
 
 def fig4_wape_comparison(wape_lgb: float, wape_naive: float, out: Path) -> None:
@@ -241,7 +258,7 @@ def fig4_wape_comparison(wape_lgb: float, wape_naive: float, out: Path) -> None:
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
-    print(f"  Saved {out}")
+    logger.info(f"  Saved {out}")
 
 
 # ---------------------------------------------------------------------------
@@ -256,31 +273,31 @@ def main() -> None:
 
     FIGURES.mkdir(exist_ok=True)
 
-    print("Loading panel...")
+    logger.info("Loading panel...")
     df = pd.read_parquet(PARQUET)
-    print(f"  {len(df):,} rows, {df['year'].min():.0f}–{df['year'].max():.0f}")
+    logger.info(f"  {len(df):,} rows, {df['year'].min():.0f}–{df['year'].max():.0f}")
 
-    print("\nRunning model...")
+    logger.info("\nRunning model...")
     valid, cross_section = run_model(df)
 
-    print("\nReconciling to districts...")
+    logger.info("\nReconciling to districts...")
     district_fc = reconcile(valid)
 
-    print("\nEvaluating...")
+    logger.info("\nEvaluating...")
     valid = evaluate(valid, df, cross_section)
     eval_df = valid.dropna(subset=["naive_growth_m3"])
     wape_lgb = wape(eval_df["net_growth_m3"].values, eval_df["pred_growth_m3"].values)
     wape_naive = wape(eval_df["net_growth_m3"].values, eval_df["naive_growth_m3"].values)
-    print(f"  WAPE_lgb   = {wape_lgb:.3f}")
-    print(f"  WAPE_naive = {wape_naive:.3f}")
+    logger.info(f"  WAPE_lgb   = {wape_lgb:.3f}")
+    logger.info(f"  WAPE_naive = {wape_naive:.3f}")
 
-    print("\nGenerating figures...")
+    logger.info("\nGenerating figures...")
     fig1_district_actual_vs_predicted(district_fc, FIGURES / "01_district_actual_vs_predicted.png")
     fig2_sustainable_harvest(district_fc, FIGURES / "02_sustainable_harvest_by_district.png")
     fig3_stand_scatter(valid, FIGURES / "03_stand_predicted_vs_actual.png")
     fig4_wape_comparison(wape_lgb, wape_naive, FIGURES / "04_wape_comparison.png")
 
-    print(f"\nDone. Figures in ./{FIGURES}/")
+    logger.info(f"\nDone. Figures in ./{FIGURES}/")
 
 
 if __name__ == "__main__":

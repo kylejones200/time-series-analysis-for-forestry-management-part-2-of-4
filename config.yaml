@@ -1,0 +1,11 @@
+model:
+  alpha: 0.3
+  n_estimators: 500
+  learning_rate: 0.05
+output:
+  figures_dir: images
+  figure_format: png
+  figure_dpi: 100
+  figsize:
+  - 8
+  - 4
