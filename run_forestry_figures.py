@@ -174,28 +174,29 @@ def evaluate(valid: pd.DataFrame, df: pd.DataFrame, cross_section: bool) -> pd.D
 # Figures
 # ---------------------------------------------------------------------------
 
-def fig1_district_actual_vs_predicted(district_fc: pd.DataFrame, out: Path) -> None:
+def fig1_district_actual_vs_predicted(district_fc: pd.DataFrame, out: Path, plot: bool = False) -> None:
     """Line chart: district-level actual vs predicted growth by year."""
     agg = (
         district_fc.groupby("year")[["net_growth_m3", "pred_growth_m3"]]
         .sum()
         .reset_index()
     )
-    fig, ax = plt.subplots(figsize=tuple(config.get('output', {}).get('figsize', [8, 4])))
-    ax.plot(agg["year"], agg["net_growth_m3"], marker="o", label="Actual")
-    ax.plot(agg["year"], agg["pred_growth_m3"], marker="s", linestyle="--", label="Predicted")
-    ax.set_title("District-level Actual vs Predicted Net Growth (state total)")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Net growth (m³)")
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    fig.tight_layout()
-    fig.savefig(out)
-    plt.close(fig)
+    if plot:
+        fig, ax = plt.subplots(figsize=tuple(config.get('output', {}).get('figsize', [8, 4])))
+        ax.plot(agg["year"], agg["net_growth_m3"], marker="o", label="Actual")
+        ax.plot(agg["year"], agg["pred_growth_m3"], marker="s", linestyle="--", label="Predicted")
+        ax.set_title("District-level Actual vs Predicted Net Growth (state total)")
+        ax.set_xlabel("Year")
+        ax.set_ylabel("Net growth (m³)")
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        fig.savefig(out)
+        plt.close(fig)
     logger.info(f"  Saved {out}")
 
 
-def fig2_sustainable_harvest(district_fc: pd.DataFrame, out: Path, top_n: int = 10) -> None:
+def fig2_sustainable_harvest(district_fc: pd.DataFrame, out: Path, top_n: int = 10, plot: bool = False) -> None:
     """Bar chart: sustainable harvest vs predicted growth by district (latest year)."""
     latest_year = district_fc["year"].max()
     sub = (
@@ -204,60 +205,63 @@ def fig2_sustainable_harvest(district_fc: pd.DataFrame, out: Path, top_n: int = 
         .sort_values("pred_growth_m3", ascending=True)
     )
     y_pos = np.arange(len(sub))
-    fig, ax = plt.subplots(figsize=(8, max(4, len(sub) * 0.5)))
-    ax.barh(y_pos, sub["pred_growth_m3"], color="steelblue", alpha=0.7, label="Predicted growth")
-    ax.barh(y_pos, sub["sustainable_harvest_m3"], color="seagreen", alpha=0.85, label="Sustainable harvest")
-    ax.set_yticks(y_pos)
-    ax.set_yticklabels(sub["district"])
-    ax.set_xlabel("Volume (m³)")
-    ax.set_title(f"Sustainable Harvest vs Predicted Growth by District ({latest_year})")
-    ax.legend()
-    ax.grid(True, axis="x", alpha=0.3)
-    fig.tight_layout()
-    fig.savefig(out)
-    plt.close(fig)
+    if plot:
+        fig, ax = plt.subplots(figsize=(8, max(4, len(sub) * 0.5)))
+        ax.barh(y_pos, sub["pred_growth_m3"], color="steelblue", alpha=0.7, label="Predicted growth")
+        ax.barh(y_pos, sub["sustainable_harvest_m3"], color="seagreen", alpha=0.85, label="Sustainable harvest")
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(sub["district"])
+        ax.set_xlabel("Volume (m³)")
+        ax.set_title(f"Sustainable Harvest vs Predicted Growth by District ({latest_year})")
+        ax.legend()
+        ax.grid(True, axis="x", alpha=0.3)
+        fig.tight_layout()
+        fig.savefig(out)
+        plt.close(fig)
     logger.info(f"  Saved {out}")
 
 
-def fig3_stand_scatter(valid: pd.DataFrame, out: Path) -> None:
+def fig3_stand_scatter(valid: pd.DataFrame, out: Path, plot: bool = False) -> None:
     """Scatter: stand-level predicted vs actual (validation points)."""
     sub = valid.dropna(subset=["pred_growth_m3", "net_growth_m3"])
     lo = min(sub["net_growth_m3"].min(), sub["pred_growth_m3"].min()) * 0.9
     hi = max(sub["net_growth_m3"].max(), sub["pred_growth_m3"].max()) * 1.1
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.scatter(sub["net_growth_m3"], sub["pred_growth_m3"],
-               alpha=0.25, s=10, color="steelblue")
-    ax.plot([lo, hi], [lo, hi], "r--", linewidth=1, label="1:1 line")
-    ax.set_xlim(lo, hi)
-    ax.set_ylim(lo, hi)
-    ax.set_xlabel("Actual net growth (m³)")
-    ax.set_ylabel("Predicted net growth (m³)")
-    ax.set_title("Stand-level Predicted vs Actual (validation)")
-    ax.legend()
-    ax.grid(True, alpha=0.3)
-    fig.tight_layout()
-    fig.savefig(out)
-    plt.close(fig)
+    if plot:
+        fig, ax = plt.subplots(figsize=(6, 6))
+        ax.scatter(sub["net_growth_m3"], sub["pred_growth_m3"],
+                   alpha=0.25, s=10, color="steelblue")
+        ax.plot([lo, hi], [lo, hi], "r--", linewidth=1, label="1:1 line")
+        ax.set_xlim(lo, hi)
+        ax.set_ylim(lo, hi)
+        ax.set_xlabel("Actual net growth (m³)")
+        ax.set_ylabel("Predicted net growth (m³)")
+        ax.set_title("Stand-level Predicted vs Actual (validation)")
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        fig.savefig(out)
+        plt.close(fig)
     logger.info(f"  Saved {out}")
 
 
-def fig4_wape_comparison(wape_lgb: float, wape_naive: float, out: Path) -> None:
+def fig4_wape_comparison(wape_lgb: float, wape_naive: float, out: Path, plot: bool = False) -> None:
     """Bar chart: WAPE comparison between LightGBM and naive baseline."""
     labels = ["District prior\n(naive)", "LightGBM"]
     values = [wape_naive, wape_lgb]
     colors = ["#aec7e8", "#1f77b4"]
-    fig, ax = plt.subplots(figsize=(5, 4))
-    bars = ax.bar(labels, values, color=colors, width=0.5)
-    for bar, val in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
-                f"{val:.2f}", ha="center", va="bottom", fontsize=11)
-    ax.set_ylabel("WAPE (lower is better)")
-    ax.set_title("WAPE: District Prior Mean vs LightGBM")
-    ax.set_ylim(0, max(values) * 1.25)
-    ax.grid(True, axis="y", alpha=0.3)
-    fig.tight_layout()
-    fig.savefig(out)
-    plt.close(fig)
+    if plot:
+        fig, ax = plt.subplots(figsize=(5, 4))
+        bars = ax.bar(labels, values, color=colors, width=0.5)
+        for bar, val in zip(bars, values):
+            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.01,
+                    f"{val:.2f}", ha="center", va="bottom", fontsize=11)
+        ax.set_ylabel("WAPE (lower is better)")
+        ax.set_title("WAPE: District Prior Mean vs LightGBM")
+        ax.set_ylim(0, max(values) * 1.25)
+        ax.grid(True, axis="y", alpha=0.3)
+        fig.tight_layout()
+        fig.savefig(out)
+        plt.close(fig)
     logger.info(f"  Saved {out}")
 
 
