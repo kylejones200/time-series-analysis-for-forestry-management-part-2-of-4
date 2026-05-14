@@ -1,6 +1,6 @@
 # Time Series Analysis for Forestry Management (Part 2 of 4)
 
-**Medium:** [https://medium.com/@kyle-t-jones/time-series-analysis-for-forestry-management-part-2-of-4-81d9f34e2394](https://medium.com/@kyle-t-jones/time-series-analysis-for-forestry-management-part-2-of-4-81d9f34e2394)
+Medium: [https://medium.com/@kyle-t-jones/time-series-analysis-for-forestry-management-part-2-of-4-81d9f34e2394](https://medium.com/@kyle-t-jones/time-series-analysis-for-forestry-management-part-2-of-4-81d9f34e2394)
 
 Oregon Coast Range Douglas-fir (PSME) case study. Builds a multi-stand annual panel from public FIA and PRISM data, trains a LightGBM walk-forward model, reconciles stand forecasts to district totals, and evaluates against a district prior mean baseline.
 
@@ -30,10 +30,10 @@ python run_forestry_figures.py  # trains model, reconciles, evaluates, writes fi
 
 ## Data sources
 
-- **FIA DataMart** (USDA Forest Service) — https://www.fia.fs.usda.gov/
-- **PRISM Climate** (Oregon State) — https://prism.oregonstate.edu/
-- **MODIS/VIIRS NDVI** — optional; placeholders used when unavailable
-- **LANDFIRE** — optional; placeholders used when unavailable
+- FIA DataMart (USDA Forest Service) — https://www.fia.fs.usda.gov/
+- PRISM Climate (Oregon State) — https://prism.oregonstate.edu/
+- MODIS/VIIRS NDVI — optional; placeholders used when unavailable
+- LANDFIRE — optional; placeholders used when unavailable
 
 ## Results (from article run)
 
