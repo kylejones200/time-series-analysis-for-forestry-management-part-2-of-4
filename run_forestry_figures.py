@@ -24,6 +24,7 @@ Figures produced
 
 from pathlib import Path
 
+import signalplot
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -49,7 +50,7 @@ PARQUET = Path("coast_range_dfir_panel.parquet")
 FIGURES = Path("figures")
 VAL_FROM = 2019
 
-plt.rcParams.update({"figure.dpi": 150, "font.size": 10})
+signalplot.apply(font_family='serif')
 
 
 # ---------------------------------------------------------------------------
