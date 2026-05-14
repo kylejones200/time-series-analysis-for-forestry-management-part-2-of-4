@@ -199,11 +199,11 @@ def _prism_point(lat: float, lon: float, year: int) -> tuple[float, float]:
             f"&buffer=0&units=si&sdate={year}-01-01&edate={year}-12-31"
         )
         r = requests.get(url, timeout=15)
-        if r.status_code == 200:
-            data = r.json()
-            # API returns monthly values; sum for annual ppt
-            ppt_values = [row.get("value", 0) for row in data.get("data", [])]
-            ppt = float(np.sum(ppt_values)) if ppt_values else _normal_ppt(lat)
+        r.raise_for_status()
+        data = r.json()
+        # API returns monthly values; sum for annual ppt
+        ppt_values = [row.get("value", 0) for row in data.get("data", [])]
+        ppt = float(np.sum(ppt_values)) if ppt_values else _normal_ppt(lat)
 
             # Fetch tmean for GDD
             url_t = url.replace("type=ppt", "type=tmean")
