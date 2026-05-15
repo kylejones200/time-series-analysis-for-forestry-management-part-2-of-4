@@ -24,6 +24,7 @@ Output
 """
 
 import hashlib
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -46,6 +47,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+warnings.filterwarnings("ignore")
 
 # ---------------------------------------------------------------------------
 # Config
@@ -192,16 +194,16 @@ def _prism_point(lat: float, lon: float, year: int) -> tuple[float, float]:
         import requests
         # PRISM Explorer time series endpoint
         url = (
-            f"https://prism.oregonstate.edu/explorer/dataexplorer/raster.php"
+            "https://prism.oregonstate.edu/explorer/dataexplorer/raster.php"
             f"?type=ppt&resolution=4km&lat={lat}&lon={lon}"
             f"&buffer=0&units=si&sdate={year}-01-01&edate={year}-12-31"
         )
         r = requests.get(url, timeout=15)
-        r.raise_for_status()
-        data = r.json()
-        # API returns monthly values; sum for annual ppt
-        ppt_values = [row.get("value", 0) for row in data.get("data", [])]
-        ppt = float(np.sum(ppt_values)) if ppt_values else _normal_ppt(lat)
+        if r.status_code == 200:
+            data = r.json()
+            # API returns monthly values; sum for annual ppt
+            ppt_values = [row.get("value", 0) for row in data.get("data", [])]
+            ppt = float(np.sum(ppt_values)) if ppt_values else _normal_ppt(lat)
 
             # Fetch tmean for GDD
             url_t = url.replace("type=ppt", "type=tmean")

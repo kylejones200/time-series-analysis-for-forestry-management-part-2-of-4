@@ -26,3 +26,11 @@ node_modules/
 .vscode/
 .idea/
 *.swp
+# Secrets 
+.env.*
+!.env.example
+credentials.json
+secrets.json
+service-account*.json
+*.pem
+*.key
