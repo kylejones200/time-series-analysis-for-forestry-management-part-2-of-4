@@ -24,27 +24,27 @@ Output
 """
 
 import hashlib
+import logging
 import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
-import logging
 import yaml
+
 
 def load_config(config_path=None):
     """Load configuration from YAML file."""
     if config_path is None:
-        config_path = Path(__file__).parent / 'config.yaml'
+        config_path = Path(__file__).parent / "config.yaml"
     if not config_path.exists():
         return {}
     with open(config_path) as _f:
         return _yaml.safe_load(_f) or {}
 
+
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 warnings.filterwarnings("ignore")
@@ -53,8 +53,8 @@ warnings.filterwarnings("ignore")
 # Config
 # ---------------------------------------------------------------------------
 STATE = "OR"
-SPECIES_CODE = "PSME"          # Douglas-fir
-TARGET_COUNTIES = {59, 7}      # Tillamook = 59, Clatsop = 7 (FIA COUNTYCD)
+SPECIES_CODE = "PSME"  # Douglas-fir
+TARGET_COUNTIES = {59, 7}  # Tillamook = 59, Clatsop = 7 (FIA COUNTYCD)
 YEAR_MIN, YEAR_MAX = 2010, 2024
 OUTPUT = Path("coast_range_dfir_panel.parquet")
 
@@ -66,6 +66,7 @@ DEFAULT_POLICY_CAP_FRAC = 0.80
 # ---------------------------------------------------------------------------
 # FIA fetch
 # ---------------------------------------------------------------------------
+
 
 def fetch_fia_trees(state: str, county_codes: set[int]) -> pd.DataFrame:
     """
@@ -91,8 +92,8 @@ def fetch_fia_trees(state: str, county_codes: set[int]) -> pd.DataFrame:
 
     # Filter to target counties and species
     trees = trees[
-        (trees["COUNTYCD"].isin(county_codes)) &
-        (trees["SPCD"] == 202)  # PSME = FIA species code 202
+        (trees["COUNTYCD"].isin(county_codes))
+        & (trees["SPCD"] == 202)  # PSME = FIA species code 202
     ].copy()
 
     if trees.empty:
@@ -141,13 +142,24 @@ def trees_to_panel(trees: pd.DataFrame) -> pd.DataFrame:
     county_to_district = {59: "Tillamook", 7: "Clatsop"}
     t["district"] = t["COUNTYCD"].map(county_to_district).fillna("Other")
 
-    cols = ["stand_id", "year", "species", "net_growth_m3", "harvest_m3",
-            "elev_m", "age_class", "district", "remper"]
+    cols = [
+        "stand_id",
+        "year",
+        "species",
+        "net_growth_m3",
+        "harvest_m3",
+        "elev_m",
+        "age_class",
+        "district",
+        "remper",
+    ]
     panel = t[cols].dropna(subset=["year", "net_growth_m3"])
     panel = panel[panel["year"].between(YEAR_MIN, YEAR_MAX)]
     panel = panel.reset_index(drop=True)
-    logger.info(f"  Panel rows after aggregation: {len(panel):,}  "
-          f"years {panel['year'].min():.0f}–{panel['year'].max():.0f}")
+    logger.info(
+        f"  Panel rows after aggregation: {len(panel):,}  "
+        f"years {panel['year'].min():.0f}–{panel['year'].max():.0f}"
+    )
     return panel
 
 
@@ -155,8 +167,10 @@ def trees_to_panel(trees: pd.DataFrame) -> pd.DataFrame:
 # PRISM climate
 # ---------------------------------------------------------------------------
 
-def fetch_prism_county(county_fips_list: list[int],
-                       year_min: int, year_max: int) -> pd.DataFrame:
+
+def fetch_prism_county(
+    county_fips_list: list[int], year_min: int, year_max: int
+) -> pd.DataFrame:
     """
     Fetch annual PRISM precipitation and GDD proxies for each county.
 
@@ -167,16 +181,17 @@ def fetch_prism_county(county_fips_list: list[int],
     """
     # County centroids (lat/lon) for Tillamook and Clatsop, OR
     centroids = {
-        59: (45.46, -123.85),   # Tillamook
-        7:  (46.07, -123.72),   # Clatsop
+        59: (45.46, -123.85),  # Tillamook
+        7: (46.07, -123.72),  # Clatsop
     }
 
     records = []
     for countycd, (lat, lon) in centroids.items():
         for year in range(year_min, year_max + 1):
             ppt, gdd = _prism_point(lat, lon, year)
-            records.append({"countycd": countycd, "year": year,
-                             "precip_mm": ppt, "gdd": gdd})
+            records.append(
+                {"countycd": countycd, "year": year, "precip_mm": ppt, "gdd": gdd}
+            )
 
     df = pd.DataFrame(records)
     logger.info(f"  PRISM records: {len(df)}")
@@ -192,6 +207,7 @@ def _prism_point(lat: float, lon: float, year: int) -> tuple[float, float]:
     """
     try:
         import requests
+
         # PRISM Explorer time series endpoint
         url = (
             "https://prism.oregonstate.edu/explorer/dataexplorer/raster.php"
@@ -219,7 +235,9 @@ def _prism_point(lat: float, lon: float, year: int) -> tuple[float, float]:
         pass
 
     # Fallback: Oregon Coast Range climatological normals with interannual noise
-    rng = np.random.default_rng(int(hashlib.md5(f"{lat}{lon}{year}".encode()).hexdigest(), 16) % (2**32))
+    rng = np.random.default_rng(
+        int(hashlib.md5(f"{lat}{lon}{year}".encode()).hexdigest(), 16) % (2**32)
+    )
     ppt = _normal_ppt(lat) * (1 + rng.normal(0, 0.12))
     gdd = _normal_gdd(lat) * (1 + rng.normal(0, 0.08))
     return float(ppt), float(gdd)
@@ -238,6 +256,7 @@ def _normal_gdd(lat: float) -> float:
 # ---------------------------------------------------------------------------
 # NDVI placeholders
 # ---------------------------------------------------------------------------
+
 
 def add_ndvi_placeholders(panel: pd.DataFrame) -> pd.DataFrame:
     """
@@ -258,9 +277,8 @@ def add_ndvi_placeholders(panel: pd.DataFrame) -> pd.DataFrame:
 
     # 5-year rolling normal per stand; anomaly = deviation from that
     panel = panel.sort_values(["stand_id", "year"])
-    roll_mean = (
-        panel.groupby("stand_id")["ndvi_mean"]
-        .transform(lambda s: s.shift(1).rolling(5, min_periods=1).mean())
+    roll_mean = panel.groupby("stand_id")["ndvi_mean"].transform(
+        lambda s: s.shift(1).rolling(5, min_periods=1).mean()
     )
     panel["ndvi_anom"] = panel["ndvi_mean"] - roll_mean.fillna(panel["ndvi_mean"])
     return panel
@@ -269,6 +287,7 @@ def add_ndvi_placeholders(panel: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Policy caps
 # ---------------------------------------------------------------------------
+
 
 def add_policy_caps(panel: pd.DataFrame) -> pd.DataFrame:
     """
@@ -285,6 +304,7 @@ def add_policy_caps(panel: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def build_panel() -> pd.DataFrame:
     trees = fetch_fia_trees(STATE, TARGET_COUNTIES)
