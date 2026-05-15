@@ -30,7 +30,6 @@ import numpy as np
 import pandas as pd
 
 import logging
-import yaml
 
 def load_config(config_path=None):
     """Load configuration from YAML file."""
