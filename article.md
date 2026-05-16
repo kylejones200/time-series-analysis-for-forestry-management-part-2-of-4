@@ -1,3 +1,7 @@
+---
+canonical_link: "https://medium.com/p/b38eb28fa304"
+---
+
 # Time Series Analysis for Forestry Management (Part 2 of 4) Sustainable forestry management relies on accurate predictions of tree
 growth and logging rates. Time series forecasting techniques allow...
 
@@ -88,4 +92,4 @@ Forest pests and diseases can cause widespread damage, but time series analysis 
 - Collecting and analyzing historical bark beetle outbreak data.
 - Building an ARIMA-based prediction model.
 - Implementing mitigation strategies based on time series forecasts.
-This section of the book provides practical methodologies and case studies demonstrating how time series analysis can be leveraged for forestry management. By applying these techniques, foresters, researchers, and policymakers can make informed, data-driven decisions to protect and sustainably manage forest resources. [View original.](https://medium.com/p/b38eb28fa304)
+This section of the book provides practical methodologies and case studies demonstrating how time series analysis can be leveraged for forestry management. By applying these techniques, foresters, researchers, and policymakers can make informed, data-driven decisions to protect and sustainably manage forest resources.
