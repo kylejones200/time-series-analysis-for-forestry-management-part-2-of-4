@@ -25,7 +25,6 @@ Output
 
 import hashlib
 import logging
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -47,7 +46,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
-warnings.filterwarnings("ignore")
 
 # ---------------------------------------------------------------------------
 # Config

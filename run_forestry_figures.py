@@ -138,7 +138,7 @@ def run_model(df: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
         )
         model.fit(train[features], train["net_growth_m3"], categorical_feature=cat_feat)
         valid_y["pred_growth_m3"] = model.predict(valid_y[features])
-        pd.concat([valid_parts, valid_y])
+        valid_parts.append(valid_y)
 
     valid = pd.concat(valid_parts, ignore_index=True)
     logger.info(f"Mode: {'cross-section' if cross_section else 'time-series'}")
