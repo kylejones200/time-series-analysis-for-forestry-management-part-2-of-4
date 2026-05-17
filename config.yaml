@@ -1,11 +1,22 @@
+logging:
+  level: INFO
+
+data:
+  panel_path: data/coast_range_dfir_panel.parquet
+  state: OR
+  species_code: PSME
+  target_counties: [59, 7]
+  year_min: 2010
+  year_max: 2024
+  policy_cap_frac: 0.80
+
 model:
-  alpha: 0.3
+  species_filter: PSME
+  val_from: 2019
   n_estimators: 500
   learning_rate: 0.05
+
 output:
-  figures_dir: images
-  figure_format: png
+  figures_dir: outputs/figures
   figure_dpi: 100
-  figsize:
-  - 8
-  - 4
+  figsize: [8, 4]

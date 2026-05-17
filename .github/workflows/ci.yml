@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ruff
+        run: |
+          python -m pip install --upgrade pip ruff
+          targets=""
+          for path in src tests scripts; do
+            [ -e "$path" ] && targets="$targets $path"
+          done
+          if [ -z "$targets" ] && [ -f main.py ] && ! head -1 main.py | grep -q '^---'; then
+            targets="main.py"
+          fi
+          if [ -z "$targets" ]; then
+            echo "No lint targets (src/, tests/, scripts/, or main.py). Skipping."
+            exit 0
+          fi
+          # Syntax-only checks to keep CI light and avoid style noise on article repos.
+          ruff check --select E9 $targets

@@ -1,4 +1,9 @@
-# Generated data and figures (run scripts locally to reproduce)
+# Generated data and figures
+data/*.parquet
+outputs/figures/*
+!outputs/figures/.gitkeep
+
+# Legacy root outputs (if present)
 coast_range_dfir_panel.parquet
 figures/
 
@@ -13,6 +18,8 @@ env/
 dist/
 build/
 .ipynb_checkpoints/
+.ruff_cache/
+.pytest_cache/
 
 # Node
 node_modules/
@@ -26,9 +33,11 @@ node_modules/
 .vscode/
 .idea/
 *.swp
-# Secrets 
+
+# Secrets
 .env.*
 !.env.example
+config.local.yaml
 credentials.json
 secrets.json
 service-account*.json
