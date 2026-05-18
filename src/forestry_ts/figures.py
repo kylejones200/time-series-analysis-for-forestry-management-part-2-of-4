@@ -23,11 +23,7 @@ def _figsize(cfg: dict[str, Any], default: tuple[float, float] = (8.0, 4.0)) -> 
 def fig1_district_actual_vs_predicted(
     district_fc: pd.DataFrame, out: Path, cfg: dict[str, Any]
 ) -> None:
-    agg = (
-        district_fc.groupby("year")[["net_growth_m3", "pred_growth_m3"]]
-        .sum()
-        .reset_index()
-    )
+    agg = district_fc.groupby("year")[["net_growth_m3", "pred_growth_m3"]].sum().reset_index()
     fig, ax = plt.subplots(figsize=_figsize(cfg))
     ax.plot(agg["year"], agg["net_growth_m3"], marker="o", label="Actual")
     ax.plot(

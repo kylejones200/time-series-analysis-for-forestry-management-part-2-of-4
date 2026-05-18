@@ -22,31 +22,22 @@ def run_model(df: pd.DataFrame, cfg: dict[str, Any]) -> tuple[pd.DataFrame, bool
     model_cfg = cfg.get("model") or {}
     val_from = int(model_cfg.get("val_from", 2019))
     species_filter = str(model_cfg.get("species_filter", "PSME"))
-
     df = df.copy()
     df = (
         df[df["species"] == species_filter]
         .dropna(subset=["net_growth_m3"])
         .sort_values(["stand_id", "year"])
     )
-
     n_per_stand = df.groupby("stand_id").size()
     cross_section = n_per_stand.max() <= 1
     skip = {"net_growth_m3", "harvest_m3", "stand_id", "species"}
-
     if cross_section:
-        features = [
-            c
-            for c in df.columns
-            if c not in skip and df[c].dtype.kind in "iufO"
-        ]
+        features = [c for c in df.columns if c not in skip and df[c].dtype.kind in "iufO"]
     else:
         for col in ["net_growth_m3", "ndvi_mean", "precip_mm"]:
             if col in df.columns:
                 df[f"{col}_lag1"] = df.groupby("stand_id")[col].shift(1)
-                df[f"{col}_roll3"] = (
-                    df.groupby("stand_id")[col].shift(1).rolling(3).mean()
-                )
+                df[f"{col}_roll3"] = df.groupby("stand_id")[col].shift(1).rolling(3).mean()
         df = df.dropna(subset=["net_growth_m3_lag1"])
         features = [
             c
@@ -64,10 +55,8 @@ def run_model(df: pd.DataFrame, cfg: dict[str, Any]) -> tuple[pd.DataFrame, bool
 
     n_estimators = int(model_cfg.get("n_estimators", 500))
     learning_rate = float(model_cfg.get("learning_rate", 0.05))
-
     val_years = sorted(y for y in df["year"].unique() if y >= val_from)
     valid_parts: list[pd.DataFrame] = []
-
     for val_year in val_years:
         train = df[df.year < val_year].copy()
         valid_y = df[df.year == val_year].copy()
@@ -107,15 +96,11 @@ def reconcile(valid: pd.DataFrame) -> pd.DataFrame:
         )
         .reset_index()
     )
-    stand_fc["sustainable_harvest_m3"] = stand_fc[
-        ["pred_growth_m3", "policy_cap_m3"]
-    ].min(axis=1)
+    stand_fc["sustainable_harvest_m3"] = stand_fc[["pred_growth_m3", "policy_cap_m3"]].min(axis=1)
     return stand_fc
 
 
-def evaluate(
-    valid: pd.DataFrame, df: pd.DataFrame, cross_section: bool
-) -> pd.DataFrame:
+def evaluate(valid: pd.DataFrame, df: pd.DataFrame, cross_section: bool) -> pd.DataFrame:
     """Attach naive baseline for WAPE comparison."""
     if cross_section:
         district_prev = (

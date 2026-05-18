@@ -27,22 +27,17 @@ logger = logging.getLogger(__name__)
 def run(config_path: Path | str | None = None) -> dict[str, Any]:
     cfg = load_config(config_path)
     configure_logging(cfg)
-
     signalplot.apply(font_family="serif")
-
     data_cfg = cfg.get("data") or {}
     panel_path = resolve_project_path(
         data_cfg.get("panel_path", DEFAULT_PANEL_PATH.relative_to(PROJECT_ROOT))
     )
     if not panel_path.is_file():
-        raise FileNotFoundError(
-            f"{panel_path} not found. Run: uv run forestry-fetch"
-        )
+        raise FileNotFoundError(f"{panel_path} not found. Run: uv run forestry-fetch")
 
     out_cfg = cfg.get("output") or {}
     figures_dir = resolve_project_path(out_cfg.get("figures_dir", "outputs/figures"))
     figures_dir.mkdir(parents=True, exist_ok=True)
-
     logger.info("Loading panel from %s", panel_path)
     df = pd.read_parquet(panel_path)
     logger.info(
@@ -51,23 +46,17 @@ def run(config_path: Path | str | None = None) -> dict[str, Any]:
         df["year"].min(),
         df["year"].max(),
     )
-
     logger.info("Running model...")
     valid, cross_section = run_model(df, cfg)
-
     logger.info("Reconciling to districts...")
     district_fc = reconcile(valid)
-
     logger.info("Evaluating...")
     valid = evaluate(valid, df, cross_section)
     eval_df = valid.dropna(subset=["naive_growth_m3"])
     wape_lgb = wape(eval_df["net_growth_m3"].values, eval_df["pred_growth_m3"].values)
-    wape_naive = wape(
-        eval_df["net_growth_m3"].values, eval_df["naive_growth_m3"].values
-    )
+    wape_naive = wape(eval_df["net_growth_m3"].values, eval_df["naive_growth_m3"].values)
     logger.info("WAPE_lgb   = %.3f", wape_lgb)
     logger.info("WAPE_naive = %.3f", wape_naive)
-
     logger.info("Generating figures...")
     fig1_district_actual_vs_predicted(
         district_fc, figures_dir / "01_district_actual_vs_predicted.png", cfg
@@ -76,10 +65,7 @@ def run(config_path: Path | str | None = None) -> dict[str, Any]:
         district_fc, figures_dir / "02_sustainable_harvest_by_district.png", cfg
     )
     fig3_stand_scatter(valid, figures_dir / "03_stand_predicted_vs_actual.png", cfg)
-    fig4_wape_comparison(
-        wape_lgb, wape_naive, figures_dir / "04_wape_comparison.png", cfg
-    )
-
+    fig4_wape_comparison(wape_lgb, wape_naive, figures_dir / "04_wape_comparison.png", cfg)
     logger.info("Done. Figures in %s", figures_dir)
     return {
         "wape_lgb": wape_lgb,

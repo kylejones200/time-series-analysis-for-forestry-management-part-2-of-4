@@ -23,17 +23,13 @@ def fetch_fia_trees(state: str, county_codes: set[int], species_code: str) -> pd
         import pyfia
     except ImportError as exc:
         raise SystemExit(
-            "pyfia not installed. Run: uv sync\n"
-            "First run downloads Oregon FIA data (~400 MB)."
+            "pyfia not installed. Run: uv sync\nFirst run downloads Oregon FIA data (~400 MB)."
         ) from exc
 
     logger.info("Loading FIA data for %s (first run downloads from DataMart)...", state)
     fia = pyfia.FIA(state)
     trees = fia.panel(level="tree")
-    trees = trees[
-        (trees["COUNTYCD"].isin(county_codes)) & (trees["SPCD"] == 202)
-    ].copy()
-
+    trees = trees[(trees["COUNTYCD"].isin(county_codes)) & (trees["SPCD"] == 202)].copy()
     if trees.empty:
         raise ValueError(
             f"No {species_code} trees found in counties {county_codes}. "
@@ -56,23 +52,18 @@ def trees_to_panel(
     t["remper"] = pd.to_numeric(t.get("REMPER", np.nan), errors="coerce").fillna(5)
     vol = pd.to_numeric(t.get("VOLCFNET", np.nan), errors="coerce").fillna(0)
     t["net_growth_m3"] = (vol / t["remper"]) * 0.0283168
-
     t["stand_id"] = t["PLT_CN"].astype(str)
     t["year"] = pd.to_numeric(t["INVYR"], errors="coerce")
     t["species"] = species_code
     t["harvest_m3"] = 0.0
-
     elev_ft = pd.to_numeric(t.get("ELEV", np.nan), errors="coerce")
     t["elev_m"] = elev_ft * 0.3048
-
     site = pd.to_numeric(t.get("SITECLCD", np.nan), errors="coerce").fillna(4)
     t["age_class"] = pd.cut(
         site, bins=[0, 2, 4, 6, 7], labels=["young", "mid", "mature", "old"]
     ).astype(str)
-
     county_to_district = {59: "Tillamook", 7: "Clatsop"}
     t["district"] = t["COUNTYCD"].map(county_to_district).fillna("Other")
-
     cols = [
         "stand_id",
         "year",
@@ -110,7 +101,6 @@ def _prism_point(lat: float, lon: float, year: int) -> tuple[float, float]:
             data = r.json()
             ppt_values = [row.get("value", 0) for row in data.get("data", [])]
             ppt = float(np.sum(ppt_values)) if ppt_values else _normal_ppt(lat)
-
             url_t = url.replace("type=ppt", "type=tmean")
             rt = requests.get(url_t, timeout=15)
             if rt.status_code == 200:
@@ -138,9 +128,7 @@ def _normal_gdd(lat: float) -> float:
     return 1400 - (lat - 45) * 40
 
 
-def fetch_prism_county(
-    county_fips_list: list[int], year_min: int, year_max: int
-) -> pd.DataFrame:
+def fetch_prism_county(county_fips_list: list[int], year_min: int, year_max: int) -> pd.DataFrame:
     centroids = {59: (45.46, -123.85), 7: (46.07, -123.72)}
     records = []
     for countycd, (lat, lon) in centroids.items():
@@ -148,9 +136,7 @@ def fetch_prism_county(
             continue
         for year in range(year_min, year_max + 1):
             ppt, gdd = _prism_point(lat, lon, year)
-            records.append(
-                {"countycd": countycd, "year": year, "precip_mm": ppt, "gdd": gdd}
-            )
+            records.append({"countycd": countycd, "year": year, "precip_mm": ppt, "gdd": gdd})
     df = pd.DataFrame(records)
     logger.info("  PRISM records: %s", len(df))
     return df
@@ -165,7 +151,6 @@ def add_ndvi_placeholders(panel: pd.DataFrame) -> pd.DataFrame:
         + (panel["year"] - 2010) * 0.002
         + rng.normal(0, 0.03, len(panel))
     ).clip(0.3, 0.95)
-
     panel = panel.sort_values(["stand_id", "year"])
     roll_mean = panel.groupby("stand_id")["ndvi_mean"].transform(
         lambda s: s.shift(1).rolling(5, min_periods=1).mean()
@@ -184,7 +169,6 @@ def add_policy_caps(panel: pd.DataFrame, cap_frac: float = DEFAULT_POLICY_CAP_FR
 def build_panel(cfg: dict[str, Any] | None = None) -> pd.DataFrame:
     cfg = cfg or load_config()
     data_cfg = cfg.get("data") or {}
-
     state = str(data_cfg.get("state", "OR"))
     species_code = str(data_cfg.get("species_code", "PSME"))
     target_counties = set(data_cfg.get("target_counties", [59, 7]))
@@ -193,23 +177,16 @@ def build_panel(cfg: dict[str, Any] | None = None) -> pd.DataFrame:
     default_panel = DEFAULT_PANEL_PATH.relative_to(PROJECT_ROOT)
     output = resolve_project_path(data_cfg.get("panel_path", default_panel))
     cap_frac = float(data_cfg.get("policy_cap_frac", DEFAULT_POLICY_CAP_FRAC))
-
     trees = fetch_fia_trees(state, target_counties, species_code)
-    panel = trees_to_panel(
-        trees, species_code=species_code, year_min=year_min, year_max=year_max
-    )
-
+    panel = trees_to_panel(trees, species_code=species_code, year_min=year_min, year_max=year_max)
     county_map = {v: k for k, v in {59: "Tillamook", 7: "Clatsop"}.items()}
     panel["countycd"] = panel["district"].map(county_map).fillna(0).astype(int)
-
     prism = fetch_prism_county(list(target_counties), year_min, year_max)
     panel = panel.merge(prism, on=["countycd", "year"], how="left")
     panel = panel.drop(columns=["countycd"])
-
     panel = add_ndvi_placeholders(panel)
     panel = add_policy_caps(panel, cap_frac=cap_frac)
     panel = panel.sort_values(["district", "stand_id", "year"]).reset_index(drop=True)
-
     output.parent.mkdir(parents=True, exist_ok=True)
     panel.to_parquet(output, index=False)
     logger.info("Saved %s rows → %s", f"{len(panel):,}", output)
