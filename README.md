@@ -4,6 +4,14 @@ Medium: [Time Series Analysis for Forestry Management — Part 2 of 4](https://m
 
 Oregon Coast Range Douglas-fir (PSME) case study. Builds a multi-stand annual panel from public FIA and PRISM data, trains a LightGBM walk-forward model, reconciles stand forecasts to district totals, and evaluates against a district prior mean baseline.
 
+## Business context
+
+Sustainable forestry management relies on accurate predictions of tree growth and logging rates. Time series forecasting techniques allow foresters to optimize harvesting while ensuring the longevity of forest ecosystems.
+
+- Using dendrochronology and satellite imagery to track growth patterns. - Incorporating climate data to adjust growth models. - Identifying seasonal variations and long-term trends.
+
+- Estimating future timber supply based on past harvests. - Integrating environmental and market factors into forecasting models. - Ensuring compliance with sustainable forestry policies.
+
 ## Quick start
 
 Requires [uv](https://docs.astral.sh/uv/).
