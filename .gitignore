@@ -43,3 +43,8 @@ secrets.json
 service-account*.json
 *.pem
 *.key
+# macOS metadata on external volumes
+._*
+.AppleDouble
+# Backup files (may contain secrets)
+*.bak

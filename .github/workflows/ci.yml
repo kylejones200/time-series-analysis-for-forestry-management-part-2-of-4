@@ -30,4 +30,4 @@ jobs:
             exit 0
           fi
           # Syntax-only checks to keep CI light and avoid style noise on article repos.
-          ruff check --select E9 $targets
+          ruff check --select E9 --exclude "._*" $targets
