@@ -1,7 +1,46 @@
-# Secret scanning on every commit. Install hooks: pre-commit install
-# Skip once: SKIP=gitleaks git commit -m "message"
+# Install in each article repo:
+#   ./scripts/install_pre_commit_hooks.sh
+#
+# Hooks run on commit (staged files) and push (full repo scan).
+# Skip once: SKIP=validate-python,ruff-check git commit -m "..."
+#            SKIP=validate-python-push git push
+
 repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
     hooks:
       - id: gitleaks
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.12
+    hooks:
+      - id: ruff-check
+        name: ruff (syntax and import errors)
+        args: [--select=E9,F63,F7,F82,F821,F822,F823]
+        exclude: ^(\._|\.venv/|venv/|tests/)
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.12
+    hooks:
+      - id: ruff-check
+        name: ruff full repo (pre-push)
+        stages: [pre-push]
+        always_run: true
+        args: [--select=E9,F63,F7,F82,F821,F822,F823]
+        exclude: ^(\._|\.venv/|venv/|tests/)
+
+  - repo: local
+    hooks:
+      - id: validate-python
+        name: Python syntax and local imports
+        entry: .pre-commit/validate_python.py
+        language: script
+        types: [python]
+        exclude: ^(\._|\.venv/|venv/|tests/)
+      - id: validate-python-push
+        name: Python syntax and local imports (full repo)
+        entry: .pre-commit/validate_python.py --all
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
